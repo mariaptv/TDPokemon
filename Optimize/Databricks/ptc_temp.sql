@@ -34,18 +34,16 @@ CREATE
       SUBSTRING(REGEXP_REPLACE(phone, '\+1|\-|\.|\,|\(|\)|\#|\s|\+|^1'), 1, 20) AS phone_std0,
       TD_TIME_PARSE(
         SUBSTRING(nintendo_ptcs_ppid_updated_timestamp,
-          1,
-          19)
+          1, 19)
       ) AS nintendo_ptcs_ppid_updated_timestamp_unixtime,
       TD_TIME_PARSE(
         SUBSTRING(children_updated_timestamp,
-          1,
-          19)
+          1, 19)
       ) AS children_updated_timestamp_unixtime,
       TD_TIME_PARSE(
         SUBSTRING(birth_date,
-          1,
-          19)
-      ) AS birth_date_unixtime
+          1, 19)
+      ) AS birth_date_unixtime,
+      time
     FROM
       src_databricks.ptc

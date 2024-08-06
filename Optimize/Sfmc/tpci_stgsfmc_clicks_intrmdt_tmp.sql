@@ -11,7 +11,8 @@ WITH sub_sfmc_clicks AS (
         SUBSTRING(event_date, 1, 19) AS event_date,
         email,
         CASE 
-            WHEN SPLIT_PART(LOWER(email), '@', 2) IN (SELECT exception_value FROM src_snowflake.exception_list) THEN NULL 
+            WHEN SPLIT_PART(LOWER(email), '@', 2) IN (SELECT exception_value FROM src_snowflake.exception_list) 
+            THEN NULL 
             WHEN email LIKE '%@%' THEN LOWER(TRIM(email)) 
             ELSE NULL 
         END AS email_std,

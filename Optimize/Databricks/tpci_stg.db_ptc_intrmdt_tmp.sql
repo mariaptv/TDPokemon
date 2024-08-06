@@ -40,7 +40,7 @@ SELECT
     member_id,
     CASE
         WHEN email_except.email_domain IS NOT NULL THEN NULL
-        ELSE CONCAT(LOWER(TRIM(email)), ':', COALESCE(first_name, ''))
+        ELSE LOWER(TRIM(email)) || ':' ||COALESCE(first_name, '')
     END AS email_std_fname
 FROM src_databricks.ptc_deduped
 
