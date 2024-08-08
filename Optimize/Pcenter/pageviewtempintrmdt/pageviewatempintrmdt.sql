@@ -1,10 +1,3 @@
--- project_id: 635838
--- project_name: staging
--- workflow_name: d_stage
--- session_id: 63446273
--- attempt_id: 543232847
--- task_name: +d_stage+src^sub+for-0=list=12=%7B%22data%22%3A+run_transforms^sub+build^sub+td-for-each-0+run
-
 DROP TABLE IF EXISTS tpci_stg.td_sdk_pageviews_intrmdt_tmp;
 
 CREATE TABLE tpci_stg.td_sdk_pageviews_intrmdt_tmp AS
@@ -77,7 +70,9 @@ WITH td_sdk_pageviews_optimized AS (
         td_path,
         TRIM(onetrust_analytics_cookie) AS pcen_onetrust_analytics_cookie,
         td_platform
-    FROM src_pcenter_webtracking.pageviews_temp
+    FROM src_pcenter_webtracking.pageviews
+    where
+    time > TO_UNIXTIME (current_timestamp) - 7862400
 
 )
 

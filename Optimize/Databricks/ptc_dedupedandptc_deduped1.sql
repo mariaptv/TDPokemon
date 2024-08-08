@@ -1,5 +1,9 @@
-INSERT INTO
-  "ptc_deduped"
+DROP
+  TABLE
+    IF EXISTS "ptc_temp";
+
+CREATE
+  TABLE "ptc_temp" AS 
 SELECT
   guid,
   member_id,
