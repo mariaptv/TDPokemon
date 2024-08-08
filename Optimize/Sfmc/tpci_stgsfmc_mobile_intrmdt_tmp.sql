@@ -33,6 +33,6 @@ WITH sub_sfmc_mobile AS (
         TRIM(app_name) AS app_name,
         geofence_name,
         message_content
-    FROM src_sfmc_data. 
+    FROM src_sfmc_data.mobile_data
 )
 SELECT * FROM sub_sfmc_mobile;

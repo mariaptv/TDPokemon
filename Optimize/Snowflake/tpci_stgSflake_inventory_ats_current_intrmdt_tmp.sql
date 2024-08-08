@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS tpci_stg.sflake_inventory_ats_current_intrmdt_tmp;
 CREATE TABLE tpci_stg.sflake_inventory_ats_current_intrmdt_tmp AS
 WITH sub_sflake_inventory_ats_current AS (
     SELECT 
-        update_date,
+        TD_TIME_PARSE(update_date) update_date,
         sku,
         time,
         storefront,

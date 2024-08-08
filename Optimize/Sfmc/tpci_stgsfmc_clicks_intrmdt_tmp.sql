@@ -23,7 +23,7 @@ WITH sub_sfmc_clicks AS (
         TD_TIME_PARSE(event_date) AS event_date_unixtime,
         campaign_names,
         job_id,
-        subscriber_key,
+        CAST(subscriber_key AS VARCHAR) AS subscriber_key,
         email_name
     FROM src_sfmc_data.td_clicks
 )

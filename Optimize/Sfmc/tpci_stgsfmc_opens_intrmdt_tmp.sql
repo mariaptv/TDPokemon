@@ -6,7 +6,7 @@ WITH sub_sfmc_opens AS (
         email_send_date,
         time,
         domain,
-        subscriber_key,
+        CAST(subscriber_key AS VARCHAR) AS subscriber_key,
         TD_TIME_PARSE(event_date) AS event_date_unixtime,
         email_name,
         is_unique,
