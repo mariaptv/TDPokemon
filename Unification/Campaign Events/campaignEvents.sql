@@ -1,66 +1,118 @@
 -- Create the table
-CREATE TABLE campaign_events (
-  time TIME,  -- Assuming event_date_unixtime is a unix timestamp
-  email VARCHAR(255),  -- Adjust length if needed
-  event_name VARCHAR(255),  
-  subscriber_key VARCHAR(255),  
-  link_name VARCHAR(255),  
-  link_content VARCHAR(255),  
-  email_name VARCHAR(255),  
-  domain VARCHAR(255) ,  -- Allows null values
-  message_id VARCHAR(255),  
-  message_content VARCHAR(255),  
-  platform VARCHAR(255) ,  
-  template VARCHAR(255) , 
-  status VARCHAR(255) 
-);
+CREATE TABLE if not exists rr_tpci_stg.campaign_events (
+  time bigint,  
+  email VARCHAR,  
+  event_name VARCHAR,  
+  subscriber_key VARCHAR,  
+  link_name VARCHAR,
+  link_content VARCHAR,  
+  email_name VARCHAR,  
+  domain VARCHAR, 
+  message_id VARCHAR,  
+  message_content VARCHAR,  
+  platform VARCHAR,  
+  template VARCHAR, 
+  status VARCHAR 
+)
+with (
+  bucketed_on = array['id'],
+  bucket_count = 512
+)
 
-
-CREATE TABLE campaign_events AS
+INSERT INTO rr_tpci_stg.campaign_events 
+SELECT min(time) as time,
+min(time) as min_insert_timestamp, 
+min(min_update_timestamp) as min_update_timestamp,
+id as id,
+email as email,
+event_name as event_name,
+subscriber_key as subscriber_key,
+link_name as link_name,
+link_content as link_content,
+email_name as email_name,
+domain as domain,
+message_id as message_id,
+message_content AS message_content,
+platform as platform,
+template as template,
+status as status 
+FROM (
 SELECT 
-  clicks.event_date_unixtime as time,
-  clicks.email as email,
+  min(event_date) as time,
+  min(event_date) as min_insert_timestamp,
+  min(td_time_parse(event_date)) as min_update_timestamp,
+  max(to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')as varbinary)))) as id,
+  min(email) as email,
   'clicks' as event_name,
-  clicks.subscriber_key as subscriber_key,
-  clicks.link_name as link_name,
-  clicks.link_content as link_content,
-  clicks.email_name as email_name,
-  NULL as domain,
-  NULL AS message_id,
-  NULL AS message_content,
-  NULL as platform,
-  NULL as template,
-  NULL as status
-FROM tpci_stg.sfmc_clicks_intrmdt_tmp clicks
+  CAST(subscriber_key AS VARCHAR) as subscriber_key,
+  min(CAST(TD_TIME_PARSE(email_send_date) as VARCHAR)) AS email_send_date_unixtime,
+  max(link_name) as link_name,
+  max(link_content) as link_content,
+  max(email_name) as email_name,
+  cast(null as varchar) as domain,
+  cast(null as varchar) as message_id,
+  cast(null as varchar) as message_content,
+  cast(null as varchar) as platform,
+  cast(null as varchar) as template,
+  cast(null as varchar) as status,
+  cast(null as varchar) as request_id
+FROM src_sfmc_data.td_clicks 
+where
+    time > ${td.last_results.last_session_time} and 
+    to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')))) not in (select id from rr_tpci_stg.campaign_events where id is not null)
+    and to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')))) is not null
+group by email, subscriber_key
+
 UNION ALL
 SELECT 
-  opens.email_send_date_unixtime as time,
-  opens.email as email,
+ min(event_date) as time,
+  min(event_date) as min_insert_timestamp,
+  min(td_time_parse(event_date)) as min_update_timestamp,
+  max(to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(CAST(subscriber_key AS VARCHAR),'')as varbinary)))) as id,
+  min(email) as email,
   'opens' as event_name,
-  opens.subscriber_key as subscriber_key,
-  NULL AS link_name,
-  NULL AS link_content,
-  NULL AS email_name,
-  opens.domain as domain,
-  NULL AS message_id,
-  NULL AS message_content,
-  NULL as platform,
-  NULL as template,
-  NULL as status
-FROM tpci_stg.sfmc_opens_intrmdt_tmp opens
+  CAST(subscriber_key AS VARCHAR) as subscriber_key,
+  min(CAST(TD_TIME_PARSE(email_send_date)as VARCHAR)) AS email_send_date_unixtime,
+  cast(null as varchar) as link_name,
+  cast(null as varchar) as link_content,
+  cast(null as varchar) as email_name,
+  max(domain) as domain,
+  cast(null as varchar) as message_id,
+  cast(null as varchar) as message_content,
+  cast(null as varchar) as platform,
+  cast(null as varchar) as template,
+  cast(null as varchar) as status,
+  cast(null as varchar) as  request_id
+FROM src_sfmc_data.td_opens opens
+where
+    time > ${td.last_results.last_session_time} and 
+    to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')as varbinary))) not in (select id from rr_tpci_stg.campaign_events where id is not null)
+    and to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')))) is not null
+group by email, subscriber_key
+
 UNION ALL
 SELECT 
-  mobile.date_time_send_unixtime as time,
-  NULL as email,
+  min(date_time_send) as time,
+  min(date_time_send) as min_insert_timestamp,
+  min(td_time_parse(date_time_send)) as min_update_timestamp,
+  max(to_base64url(xxhash64(cast(coalesce(CAST(message_id AS VARCHAR),'') || coalesce(request_id,'')as varbinary)))) as id,
+  cast(null as varchar) as email,
   'mobile' as event_name,
-  NULL as subscriber_key,
-  NULL AS link_name,
-  NULL AS link_content,
-  NULL AS email_name,
-  NULL as dommain,
-  mobile.message_id as message_id,
-  mobile.message_content as message_content,
-  mobile.platform as platform,
-  mobile.template as template,
-  mobile.status as status
-FROM tpci_stg.sfmc_mobile_intrmdt_tmp mobile;
+  cast(null as varchar) as subscriber_key,
+  cast(null as varchar) AS email_send_date_unixtime,
+  cast(null as varchar) as link_name,
+  cast(null as varchar) as link_content,
+  cast(null as varchar) as email_name,
+  cast(null as varchar) as dommain,
+  max(message_id) as message_id,
+  max(message_content) as message_content,
+  max(platform) as platform,
+  max(template) as template,
+  max(status) as status,
+  max(request_id) as request_id
+FROM src_sfmc_data.mobile_data 
+where
+    time > ${td.last_results.last_session_time} and 
+    to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')as varbinary))) not in (select id from rr_tpci_stg.campaign_events where id is not null)
+    and to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')))) is not null
+group by message_id, request_id)
