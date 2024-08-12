@@ -1,5 +1,7 @@
 -- Ask exception list for email
--- Should we assume some atributes as the same or try to find them?
+-- Need to create a standardized event name for each event like pageview, click, add to cart, etc.
+-- Should we assume some atributes as the same or try to find them? Check if uuid from amplitude matches customer_uid. If so, map. If no, new field.
+-- I dont understand this: All TD JS SDK fields. Map fields from Amplitude and EP and keep the td_ prefix
 -- SELECT c.customer_uid AS c, a.uuid AS a
 -- FROM src_elastic_path_data.cart c
 -- JOIN src_amplitude_pokemoncenter.amplitude_pokemoncenter_prod a
