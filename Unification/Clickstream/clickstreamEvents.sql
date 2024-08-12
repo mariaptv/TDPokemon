@@ -10,6 +10,7 @@
 CREATE TABLE IF NOT EXISTS rr_tpci_stg.clicstream_events(
     time bigint,
     id varchar,
+    source varchar,
     cp_email VARCHAR,
     customer_uid varchar,
     storecode varchar,
@@ -34,7 +35,9 @@ CREATE TABLE IF NOT EXISTS rr_tpci_stg.clicstream_events(
     billing_country varchar,
     payment_type_name varchar,
     promo_unit_price varchar,
-    discount_amount varchar
+    discount_amount varchar,
+
+    
 ) with (
     bucketed_on = array ['id'],
     bucket_count = 512
@@ -44,6 +47,7 @@ select min(time) as time,
     min(time) as min_insert_timestamp,
     min(min_update_timestamp) as min_update_timestamp,
     id as id,
+    source as source,
     max(cp_email) as cp_email,
     customer_uid as customer_uid,
     max(storecode) as storecode,
@@ -75,6 +79,7 @@ from(
             min(time) as min_insert_timestamp,
             min(td_time_parse(shopping_cart_last_modified_date)) as min_update_timestamp,
             max(to_base64url(xxhash64(cast(coalesce(customer_uid, '') || coalesce(shopping_cart_uid, '') || coalesce(sku_code, '') as varbinary)))) as id,
+            'ep' as source,
             max(cp_email) as cp_email,
             max(storecode) as storecode,
             max(cart_status) as cart_status,
@@ -91,7 +96,7 @@ from(
             max(cp_first_name) as cp_first_name,
             max(cp_last_name) as cp_last_name,
             max(cp_phone) as cp_phone,
-            SUBSTRING(REGEXP_REPLACE(cp_phone, '\+1|\-|\.|\,|\(|\)|\#|\s|\+|^1'),1, 20) AS phone_std,
+            max(SUBSTRING(REGEXP_REPLACE(cp_phone, '\+1|\-|\.|\,|\(|\)|\#|\s|\+|^1'),1, 20)) AS phone_std,
             max(billing_first_name) as billing_first_name,
             max(billing_last_name) as billing_last_name,
             max(billing_street_1) as billing_street_1,
@@ -101,7 +106,7 @@ from(
             max(payment_type_name) as payment_type_name,
             max(promo_unit_price) as promo_unit_price,
             max(discount_amount) as discount_amount
-        from src_databricks.ptc
+        from src_elastic_path_data.cart
         where time > $ { td.last_results.last_session_time }
             and to_base64url(xxhash64(cast( coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary)) ) not in (
                 select id
@@ -119,6 +124,7 @@ from(
             min(time) as min_insert_timestamp,
             min(td_time_parse(shopping_cart_last_modified_date)) as min_update_timestamp,
             max(to_base64url(xxhash64(cast(coalesce(customer_uid, '') || coalesce(shopping_cart_uid, '') || coalesce(sku_code, '') as varbinary)))) as id,
+            'amplitud' as source,
             cast(null as varchar) as   cp_email,
             cast(null as varchar) as  storecode,
             cast(null as varchar) as cart_status,
@@ -145,7 +151,7 @@ from(
             cast(null as varchar) as  payment_type_name,
             cast(null as varchar) as  promo_unit_price,
             cast(null as varchar) as discount_amount
-        from src_databricks.ptc
+        from src_amplitude_pokemoncenter.amplitude_pokemoncenter_prod
         where time > $ { td.last_results.last_session_time }
             and to_base64url(xxhash64(cast( coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary)) ) not in (
                 select id
