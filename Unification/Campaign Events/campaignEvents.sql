@@ -1,4 +1,3 @@
--- Create the table
 CREATE TABLE if not exists rr_tpci_stg.campaign_events (
   time bigint,  
   email VARCHAR,  
@@ -113,6 +112,5 @@ SELECT
 FROM src_sfmc_data.mobile_data 
 where
     time > ${td.last_results.last_session_time} and 
-    to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')as varbinary))) not in (select id from rr_tpci_stg.campaign_events where id is not null)
-    and to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')))) is not null
+    to_base64url(xxhash64(cast(coalesce(message_id,'') || coalesce(request_id,'')))) is not null
 group by message_id, request_id)
