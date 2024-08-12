@@ -60,7 +60,7 @@ where
     time > ${td.last_results.last_session_time} and 
     to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')))) not in (select id from rr_tpci_stg.campaign_events where id is not null)
     and to_base64url(xxhash64(cast(coalesce(email,'') || coalesce(subscriber_key,'')))) is not null
-group by email, subscriber_key
+
 
 UNION ALL
 SELECT 

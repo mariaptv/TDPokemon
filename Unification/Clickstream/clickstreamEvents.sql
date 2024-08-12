@@ -6,7 +6,6 @@
 -- FROM src_elastic_path_data.cart c
 -- JOIN src_amplitude_pokemoncenter.amplitude_pokemoncenter_prod a
 -- ON c.customer_uid = a.user_id;
-
 CREATE TABLE IF NOT EXISTS rr_tpci_stg.clicstream_events(
     time bigint,
     id varchar,
@@ -36,131 +35,461 @@ CREATE TABLE IF NOT EXISTS rr_tpci_stg.clicstream_events(
     payment_type_name varchar,
     promo_unit_price varchar,
     discount_amount varchar,
-
-    
+    amplitude_id varchar,
+    device_id varchar,
+    event_time varchar,
+    server_upload_time varchar,
+    client_event_time varchar,
+    event_id varchar,
+    session_id varchar,
+    event_type varchar,
+    library varchar,
+    platform varchar,
+    os_name varchar,
+    os_version varchar,
+    device_type varchar,
+    country varchar,
+    city varchar,
+    uuid varchar,
+    td_referrer varchar,
+    td_path varchar,
+    td_host varchar,
+    td_ip varchar,
+    td_color varchar,
+    td_global_id varchar,
+    td_language varchar,
+    td_platform varchar,
+    td_user_agent varchar,
+    td_url varchar,
+    td_description varchar,
+    td_title varchar,
+    td_viewport varchar,
+    td_screen varchar,
+    td_client_id varchar,
+    td_global_id varchar,
+    td_ip varchar,
+    scarlet_violet_fan varchar,
+    video_game_fan varchar,
+    unite_fan varchar,
+    animation_fan varchar,
+    op_pe_fan varchar,
+    tcg_fa varchar
 ) with (
     bucketed_on = array ['id'],
     bucket_count = 512
 );
 insert into rr_tpci_stg.clicstream_events
-select min(time) as time,
-    min(time) as min_insert_timestamp,
-    min(min_update_timestamp) as min_update_timestamp,
+select time as time,
+    time as min_insert_timestamp,
+    min_update_timestamp as min_update_timestamp,
     id as id,
     source as source,
-    max(cp_email) as cp_email,
+    cp_email as cp_email,
     customer_uid as customer_uid,
-    max(storecode) as storecode,
-    max(cart_status) as cart_status,
+    storecode as storecode,
+    cart_status as cart_status,
     shopping_cart_uid as shopping_cart_uid,
     sku_code as sku_code,
-    max(currency) as currency,
-    max(list_unit_price) as list_unit_price,
-    max(quantity) as quantity,
-    max(item_type) as item_type,
-    max(isfreegiftitem) as isfreegiftitem,
-    max(cart_item_creation_date) as cart_item_creation_date,
-    max(shipping_option_code) as shipping_option_code,
-    max(cp_first_name) as cp_first_name,
-    max(cp_last_name) as cp_last_name,
-    max(cp_phone) as cp_phone,
-    max(phone_std) as phone_std,
-    max(billing_first_name) as billing_first_name,
-    max(billing_last_name) as billing_last_name,
-    max(billing_street_1) as billing_street_1,
-    max(billing_city) as billing_city,
-    max(billing_sub_country) as billing_sub_country,
-    max(billing_country) as billing_country,
-    max(payment_type_name) as payment_type_name,
-    max(promo_unit_price) as promo_unit_price,
-    max(discount_amount) as discount_amount
+    currency as currency,
+    list_unit_price as list_unit_price,
+    quantity as quantity,
+    item_type as item_type,
+    isfreegiftitem as isfreegiftitem,
+    cart_item_creation_date as cart_item_creation_date,
+    shipping_option_code as shipping_option_code,
+    cp_first_name as cp_first_name,
+    cp_last_name as cp_last_name,
+    cp_phone as cp_phone,
+    phone_std as phone_std,
+    billing_first_name as billing_first_name,
+    billing_last_name as billing_last_name,
+    billing_street_1 as billing_street_1,
+    billing_city as billing_city,
+    billing_sub_country as billing_sub_country,
+    billing_country as billing_country,
+    payment_type_name as payment_type_name,
+    promo_unit_price as promo_unit_price,
+    discount_amount as discount_amount,
+    amplitude_id as amplitude_id,
+    device_id as device_id,
+    event_time as event_time,
+    server_upload_time as server_upload_time,
+    client_event_time as client_event_time,
+    event_id as event_id,
+    session_id as session_id,
+    event_type as event_type,
+    library as library,
+    platform as platform,
+    os_name as os_name,
+    os_version as os_version,
+    device_type as device_type,
+    country as country,
+    city as city,
+    uuid as uuid,
+    td_referrer as td_referrer,
+    td_path as td_path,
+    td_host as td_host,
+    td_ip as td_ip,
+    td_color as td_color,
+    td_global_id as td_global_id,
+    td_language as td_language,
+    td_platform as td_platform,
+    td_user_agent as td_user_agent,
+    td_url as td_url,
+    td_description as td_description,
+    td_title as td_title,
+    td_viewport as td_viewport,
+    td_screen as td_screen,
+    td_client_id as td_client_id,
+    td_global_id as td_global_id,
+    td_ip as td_ip,
+    scarlet_violet_fan as scarlet_violet_fan,
+    video_game_fan as video_game_fan,
+    unite_fan as unite_fan,
+    animation_fan as animation_fan,
+    op_pe_fan as op_pe_fan,
+    tcg_fan as tcg_fan
 from(
-        select min(time) as time,
-            min(time) as min_insert_timestamp,
-            min(td_time_parse(shopping_cart_last_modified_date)) as min_update_timestamp,
-            max(to_base64url(xxhash64(cast(coalesce(customer_uid, '') || coalesce(shopping_cart_uid, '') || coalesce(sku_code, '') as varbinary)))) as id,
+        select time as time,
+            time as min_insert_timestamp,
+            td_time_parse(shopping_cart_last_modified_date)) as min_update_timestamp,
+            
+                to_base64url(
+                    xxhash64(
+                        cast(
+                            coalesce(customer_uid, '') || coalesce(shopping_cart_uid, '') || coalesce(sku_code, '') as varbinary
+                        )
+                    )
+                )
+             as id,
             'ep' as source,
-            max(cp_email) as cp_email,
-            max(storecode) as storecode,
-            max(cart_status) as cart_status,
-            max(shopping_cart_uid) as shopping_cart_uid,
-            max(sku_code) as sku_code,
-            max(currency) as currency,
-            max(list_unit_price) as list_unit_price,
-            max(quantity) as quantity,
-            max(customer_uid) as customer_uid,
-            max(item_type) as item_type,
-            max(isfreegiftitem) as isfreegiftitem,
-            max(cart_item_creation_date) as cart_item_creation_date,
-            max(shipping_option_code) as shipping_option_code,
-            max(cp_first_name) as cp_first_name,
-            max(cp_last_name) as cp_last_name,
-            max(cp_phone) as cp_phone,
-            max(SUBSTRING(REGEXP_REPLACE(cp_phone, '\+1|\-|\.|\,|\(|\)|\#|\s|\+|^1'),1, 20)) AS phone_std,
-            max(billing_first_name) as billing_first_name,
-            max(billing_last_name) as billing_last_name,
-            max(billing_street_1) as billing_street_1,
-            max(billing_city) as billing_city,
-            max(billing_sub_country) as billing_sub_country,
-            max(billing_country) as billing_country,
-            max(payment_type_name) as payment_type_name,
-            max(promo_unit_price) as promo_unit_price,
-            max(discount_amount) as discount_amount
+            cp_email as cp_email,
+            storecode as storecode,
+            cart_status as cart_status,
+            shopping_cart_uid as shopping_cart_uid,
+            sku_code as sku_code,
+            currency as currency,
+            list_unit_price as list_unit_price,
+            quantity as quantity,
+            customer_uid as customer_uid,
+            item_type as item_type,
+            isfreegiftitem as isfreegiftitem,
+            cart_item_creation_date as cart_item_creation_date,
+            shipping_option_code as shipping_option_code,
+            cp_first_name as cp_first_name,
+            cp_last_name as cp_last_name,
+            cp_phone as cp_phone,
+            max(
+                SUBSTRING(
+                    REGEXP_REPLACE(cp_phone, '\+1|\-|\.|\,|\(|\)|\#|\s|\+|^1'),
+                    1,
+                    20
+                )
+            ) AS phone_std,
+            billing_first_name as billing_first_name,
+            billing_last_name as billing_last_name,
+            billing_street_1 as billing_street_1,
+            billing_city as billing_city,
+            billing_sub_country as billing_sub_country,
+            billing_country as billing_country,
+            payment_type_name as payment_type_name,
+            promo_unit_price as promo_unit_price,
+            discount_amount as discount_amount,
+            cast(null as varchar) as amplitude_id,
+            cast(null as varchar) as device_id,
+            cast(null as varchar) as event_time,
+            cast(null as varchar) as server_upload_time,
+            cast(null as varchar) as client_event_time,
+            cast(null as varchar) as event_id,
+            cast(null as varchar) as session_id,
+            cast(null as varchar) as event_type,
+            cast(null as varchar) as library,
+            cast(null as varchar) as platform,
+            cast(null as varchar) as os_name,
+            cast(null as varchar) as os_version,
+            cast(null as varchar) as device_type,
+            cast(null as varchar) as country,
+            cast(null as varchar) as city,
+            cast(null as varchar) as uuid,
+            cast(null as varchar) as td_referrer,
+            cast(null as varchar) as td_path,
+            cast(null as varchar) as td_host,
+            cast(null as varchar) as td_ip,
+            cast(null as varchar) as td_color,
+            cast(null as varchar) as td_language,
+            cast(null as varchar) as td_platform,
+            cast(null as varchar) as td_user_agent,
+            cast(null as varchar) as td_url,
+            cast(null as varchar) as td_description,
+            cast(null as varchar) as td_title,
+            cast(null as varchar) as td_viewport,
+            cast(null as varchar) as td_screen,
+            cast(null as varchar) as td_client_id,
+            cast(null as varchar) as td_global_id,
+            cast(null as varchar) as td_ip,
+            cast(null as varchar) as scarlet_violet_fan,
+            cast(null as varchar) as video_game_fan,
+            cast(null as varchar) as unite_fan,
+            cast(null as varchar) as animation_fan,
+            cast(null as varchar) as op_pe_fan,
+            cast(null as varchar) as tcg_fa
         from src_elastic_path_data.cart
         where time > $ { td.last_results.last_session_time }
-            and to_base64url(xxhash64(cast( coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary)) ) not in (
+            and to_base64url(
+                xxhash64(
+                    cast(
+                        coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary
+                    )
+                )
+            ) not in (
                 select id
                 from rr_tpci_stg.identities
-                where id is not null )
+                where id is not null
+            )
             and to_base64url(
-                xxhash64(cast(coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary)
-                )) is not null
+                xxhash64(
+                    cast(
+                        coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary
+                    )
+                )
+            ) is not null
         group by customer_uid,
             shopping_cart_uid,
             sku_code
         union ALL
-
         select min(time) as time,
             min(time) as min_insert_timestamp,
-            min(td_time_parse(shopping_cart_last_modified_date)) as min_update_timestamp,
-            max(to_base64url(xxhash64(cast(coalesce(customer_uid, '') || coalesce(shopping_cart_uid, '') || coalesce(sku_code, '') as varbinary)))) as id,
+            min(td_time_parse(event_time)) as min_update_timestamp,
+            max(
+                to_base64url(
+                    xxhash64(
+                        cast(
+                            coalesce(cast(amplitude_id as varchar), '') || coalesce(cast(session_id as varchar), '') || coalesce(cast(uuid as varchar), '') as varbinary
+                        )
+                    )
+                )
+            ) as id,
             'amplitud' as source,
-            cast(null as varchar) as   cp_email,
-            cast(null as varchar) as  storecode,
+            cast(null as varchar) as cp_email,
+            cast(null as varchar) as storecode,
             cast(null as varchar) as cart_status,
-            cast(null as varchar) as  shopping_cart_uid,
-            cast(null as varchar) as  sku_code,
-            cast(null as varchar) as  currency,
+            cast(null as varchar) as shopping_cart_uid,
+            cast(null as varchar) as sku_code,
+            cast(null as varchar) as currency,
             cast(null as varchar) as list_unit_price,
-            cast(null as varchar) as   quantity,
-            cast(null as varchar) as  customer_uid,
-            cast(null as varchar) as  item_type,
-            cast(null as varchar) as  isfreegiftitem,
-            cast(null as varchar) as  cart_item_creation_date,
-            cast(null as varchar) as   shipping_option_code,
-            cast(null as varchar) as  cp_first_name,
+            cast(null as varchar) as quantity,
+            cast(null as varchar) as customer_uid,
+            cast(null as varchar) as item_type,
+            cast(null as varchar) as isfreegiftitem,
+            cast(null as varchar) as cart_item_creation_date,
+            cast(null as varchar) as shipping_option_code,
+            cast(null as varchar) as cp_first_name,
             cast(null as varchar) as cp_last_name,
-            cast(null as varchar) as  cp_phone,
-            cast(null as varchar) as  phone_std,
+            cast(null as varchar) as cp_phone,
+            cast(null as varchar) as phone_std,
             cast(null as varchar) as billing_first_name,
-            cast(null as varchar) as  billing_last_name,
-            cast(null as varchar) as  billing_street_1,
-            cast(null as varchar) as  billing_city,
+            cast(null as varchar) as billing_last_name,
+            cast(null as varchar) as billing_street_1,
+            cast(null as varchar) as billing_city,
             cast(null as varchar) as billing_sub_country,
-            cast(null as varchar) as  billing_country,
-            cast(null as varchar) as  payment_type_name,
-            cast(null as varchar) as  promo_unit_price,
-            cast(null as varchar) as discount_amount
+            cast(null as varchar) as billing_country,
+            cast(null as varchar) as payment_type_name,
+            cast(null as varchar) as promo_unit_price,
+            cast(null as varchar) as discount_amount,
+            cast(amplitude_id as varchar) as amplitude_id,
+            device_id as device_id,
+            event_time as event_time,
+            server_upload_time as server_upload_time,
+            client_event_time as client_event_time,
+            cast(event_id as varchar) as event_id,
+            cast(session_id as varchar) as session_id,
+            event_type as event_type,
+            library as library,
+            platform as platform,
+            os_name as os_name,
+            os_version as os_version,
+            device_type as device_type,
+            country as country,
+            city as city,
+            uuid as uuid cast(null as varchar) as td_referrer,
+            cast(null as varchar) as td_path,
+            cast(null as varchar) as td_host,
+            cast(null as varchar) as td_ip,
+            cast(null as varchar) as td_color,
+            cast(null as varchar) as td_language,
+            cast(null as varchar) as td_platform,
+            cast(null as varchar) as td_user_agent,
+            cast(null as varchar) as td_url,
+            cast(null as varchar) as td_description,
+            cast(null as varchar) as td_title,
+            cast(null as varchar) as td_viewport,
+            cast(null as varchar) as td_screen,
+            cast(null as varchar) as td_client_id,
+            cast(null as varchar) as td_global_id,
+            cast(null as varchar) as td_ip,
+            cast(null as varchar) as scarlet_violet_fan,
+            cast(null as varchar) as video_game_fan,
+            cast(null as varchar) as unite_fan,
+            cast(null as varchar) as animation_fan,
+            cast(null as varchar) as op_pe_fan,
+            cast(null as varchar) as tcg_fa
         from src_amplitude_pokemoncenter.amplitude_pokemoncenter_prod
         where time > $ { td.last_results.last_session_time }
-            and to_base64url(xxhash64(cast( coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary)) ) not in (
+            and to_base64url(
+                xxhash64(
+                    cast(
+                        coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary
+                    )
+                )
+            ) not in (
                 select id
                 from rr_tpci_stg.identities
-                where id is not null )
+                where id is not null
+            )
             and to_base64url(
-                xxhash64(cast(coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary)
-                )) is not null
-        group by customer_uid,
-            shopping_cart_uid,
-            sku_code
-    )
+                xxhash64(
+                    cast(
+                        coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary
+                    )
+                )
+            ) is not null
+        union ALL
+        select time as time,
+            time as min_insert_timestamp,
+            td_time_parse(time) as min_update_timestamp,
+            to_base64url(xxhash64(cast(coalesce(cast(td_client_id as varchar), '') || coalesce(cast(td_global_id as varchar), '')  as varbinary
+                        ))) as id,
+            'pcom' as source,
+            cast(null as varchar) as cp_email,
+            cast(null as varchar) as storecode,
+            cast(null as varchar) as cart_status,
+            cast(null as varchar) as shopping_cart_uid,
+            cast(null as varchar) as sku_code,
+            cast(null as varchar) as currency,
+            cast(null as varchar) as list_unit_price,
+            cast(null as varchar) as quantity,
+            cast(null as varchar) as customer_uid,
+            cast(null as varchar) as item_type,
+            cast(null as varchar) as isfreegiftitem,
+            cast(null as varchar) as cart_item_creation_date,
+            cast(null as varchar) as shipping_option_code,
+            cast(null as varchar) as cp_first_name,
+            cast(null as varchar) as cp_last_name,
+            cast(null as varchar) as cp_phone,
+            cast(null as varchar) as phone_std,
+            cast(null as varchar) as billing_first_name,
+            cast(null as varchar) as billing_last_name,
+            cast(null as varchar) as billing_street_1,
+            cast(null as varchar) as billing_city,
+            cast(null as varchar) as billing_sub_country,
+            cast(null as varchar) as billing_country,
+            cast(null as varchar) as payment_type_name,
+            cast(null as varchar) as promo_unit_price,
+            cast(null as varchar) as discount_amount,
+            cast(null as varchar) as amplitude_id,
+            cast(null as varchar) as device_id,
+            cast(null as varchar) as event_time,
+            cast(null as varchar) as server_upload_time,
+            cast(null as varchar) as client_event_time,
+            cast(null as varchar) as event_id,
+            cast(null as varchar) as session_id,
+            cast(null as varchar) as event_type,
+            cast(null as varchar) as library,
+            cast(null as varchar) as platform,
+            cast(null as varchar) as os_name,
+            cast(null as varchar) as os_version,
+            cast(null as varchar) as device_type,
+            cast(null as varchar) as country,
+            cast(null as varchar) as city,
+            cast(null as varchar) as uuid,
+            td_referrer as td_referrer,
+            td_path as td_path,
+            td_host as td_host,
+            td_ip as td_ip,
+            td_color as td_color,
+            td_language as td_language,
+            td_platform as td_platform,
+            td_user_agent as td_user_agent,
+            td_url as td_url,
+            td_description as td_description,
+            td_title as td_title,
+            td_viewport as td_viewport,
+            td_screen as td_screen,
+            td_client_id as td_client_id,
+            td_global_id as td_global_id,
+            td_ip as td_ip,
+            CASE
+                WHEN td_url like '%scarletviolet.pokemon.com%'
+                OR td_url like '%teraincursiones%'
+                OR td_url like '%raid-teracristal%'
+                OR td_url like '%tera‑raids%'
+                OR td_url like '%raids-teracristal%'
+                OR td_url like '%tera-raid-battles%'
+                OR td_url like '%pokemon-scarlet-and-pokemon-violet%'
+                OR td_url like '%pokemon-ecarlate-et-pokemon-violet%'
+                OR td_url like '%pokemon-scarlatto-e-pokemon-violetto%'
+                OR td_url like '%pokemon-karmesin-und-pokemon-purpur%'
+                OR td_url like '%pokemon-karmesin-und-pokemon-purpur%'
+                OR td_url like '%pokemon-escarlata-y-pokemon-purpura%' THEN 'true'
+                else 'false'
+            end AS scarlet_violet_fan,
+            CASE
+                WHEN td_url like '%unite.%'
+                OR td_url like '%scarletviolet.%'
+                OR td_url like '%jeux-video%'
+                OR td_url like '%video-games%'
+                OR td_url like '%jeux-video%'
+                OR td_url like '%videogiochi%'
+                OR td_url like '%videospiele%'
+                OR td_url like '%videojuegos%' THEN 'true'
+                else 'false'
+            end AS video_game_fan,
+            CASE
+                WHEN td_url like '%unite.%'
+                OR td_url like '%-unite%'
+                OR td_url like '%unite-%' THEN 'true'
+                else 'false'
+            end AS unite_fan,
+            CASE
+                WHEN td_url like '%episodes%'
+                OR td_url like '%episodi%'
+                OR td_url like '%folgen%'
+                OR td_url like '%episodios%'
+                OR td_url like '%watch.pokemon%'
+                OR td_url like '%app/pokemon-tv%'
+                OR td_url like '%animation%' THEN 'true'
+                else 'false'
+            end AS animation_fan,
+            CASE
+                WHEN td_url like '%play-pokemon%'
+                OR td_url like '%events.pokemon.com%' THEN 'true'
+                else 'false'
+            end AS op_pe_fan,
+            CASE
+                WHEN td_url like '%tcg%'
+                OR td_url like '%jcc-%'
+                OR td_url like '%/gcc%'
+                OR td_url like '%sammelkartenspiel%' THEN 'true'
+                else 'false'
+            end AS tcg_fan
+            from src_amplitude_pokemoncenter.amplitude_pokemoncenter_prod
+        where time > $ { td.last_results.last_session_time }
+            and to_base64url(
+                xxhash64(
+                    cast(
+                        coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary
+                    )
+                )
+            ) not in (
+                select id
+                from rr_tpci_stg.identities
+                where id is not null
+            )
+            and to_base64url(
+                xxhash64(
+                    cast(
+                        coalesce(email, '') || coalesce(member_id, '') || coalesce(guid, '') as varbinary
+                    )
+                )
+            ) is not null
+    
