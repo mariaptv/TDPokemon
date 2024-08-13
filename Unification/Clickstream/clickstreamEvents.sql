@@ -80,11 +80,14 @@ CREATE TABLE IF NOT EXISTS rr_tpci_stg.clicstream_events(
 );
 insert into rr_tpci_stg.clicstream_events
 select time as time,
-    time as min_insert_timestamp,
-    min_update_timestamp as min_update_timestamp,
+    event_time as event_time,
+    cart_item_creation_date_unixtime as cart_item_creation_date_unixtime,
+    cart_item_last_modified_date_unixtime as cart_item_last_modified_date_unixtime,
+    shopping_cart_last_modified_date_unixtime as shopping_cart_last_modified_date_unixtime,
     id as id,
     source as source,
     cp_email as cp_email,
+    email_address as email_address,
     customer_uid as customer_uid,
     storecode as storecode,
     cart_status as cart_status,
@@ -100,7 +103,7 @@ select time as time,
     cp_first_name as cp_first_name,
     cp_last_name as cp_last_name,
     cp_phone as cp_phone,
-    phone_std as phone_std,
+    phone as phone,
     billing_first_name as billing_first_name,
     billing_last_name as billing_last_name,
     billing_street_1 as billing_street_1,
@@ -109,6 +112,19 @@ select time as time,
     billing_country as billing_country,
     payment_type_name as payment_type_name,
     promo_unit_price as promo_unit_price,
+    shipping_zip_postal_code,
+    shipping_street_1,
+    shipping_last_name,
+    shipping_country,
+    shipping_city,
+    billing_zip_postal_code,
+    billing_street_2,
+    shipping_sub_country,
+    shipping_first_name,
+    shipping_street_2,
+    sale_unit_price,
+    rule_display_name,
+    parent_item_uid,
     discount_amount as discount_amount,
     amplitude_id as amplitude_id,
     device_id as device_id,
@@ -129,7 +145,6 @@ select time as time,
     td_referrer as td_referrer,
     td_path as td_path,
     td_host as td_host,
-    td_ip as td_ip,
     td_color as td_color,
     td_global_id as td_global_id,
     td_language as td_language,
@@ -151,49 +166,67 @@ select time as time,
     tcg_fan as tcg_fan
 from(
         select time as time,
-            time as min_insert_timestamp,
-            td_time_parse(shopping_cart_last_modified_date)) as min_update_timestamp,
-            
-                to_base64url(
-                    xxhash64(
-                        cast(
-                            coalesce(customer_uid, '') || coalesce(shopping_cart_uid, '') || coalesce(sku_code, '') as varbinary
-                        )
+            TD_TIME_PARSE(cart_item_creation_date) as event_time,
+            TD_TIME_PARSE(cart_item_last_modified_date) as cart_item_last_modified_date_unixtime,
+            TD_TIME_PARSE(shopping_cart_last_modified_date) AS shopping_cart_last_modified_date_unixtime,
+            to_base64url(
+                xxhash64(
+                    cast(
+                        coalesce(customer_uid, '') || coalesce(shopping_cart_uid, '') || coalesce(sku_code, '') as varbinary
                     )
                 )
-             as id,
-            'ep' as source,
+            ) as id,
+            'ELASTIC PATH' as source,
             cp_email as cp_email,
-            storecode as storecode,
-            cart_status as cart_status,
-            shopping_cart_uid as shopping_cart_uid,
-            sku_code as sku_code,
-            currency as currency,
-            list_unit_price as list_unit_price,
-            quantity as quantity,
-            customer_uid as customer_uid,
-            item_type as item_type,
-            isfreegiftitem as isfreegiftitem,
-            cart_item_creation_date as cart_item_creation_date,
-            shipping_option_code as shipping_option_code,
-            cp_first_name as cp_first_name,
-            cp_last_name as cp_last_name,
+            CASE
+                WHEN REGEXP_EXTRACT(LOWER(TRIM(cp_email)), '.+@(.+)', 1) in (
+                    select exception_value
+                    from src_snowflake.exception_list
+                ) then null
+                else LOWER(TRIM(cp_email))
+            end AS email_address,
+            storecode,
+            cart_status,
+            shopping_cart_uid,
+            sku_code,
+            currency,
+            list_unit_price,
+            quantity,
+            customer_uid,
+            item_type,
+            isfreegiftitem,
+            cart_item_creation_date,
+            shipping_option_code,
+            cp_first_name,
+            cp_last_name,
+            TRIM(cp_first_name || ' ' || cp_last_name) AS name,
             cp_phone as cp_phone,
-            max(
-                SUBSTRING(
-                    REGEXP_REPLACE(cp_phone, '\+1|\-|\.|\,|\(|\)|\#|\s|\+|^1'),
-                    1,
-                    20
-                )
-            ) AS phone_std,
-            billing_first_name as billing_first_name,
-            billing_last_name as billing_last_name,
-            billing_street_1 as billing_street_1,
-            billing_city as billing_city,
-            billing_sub_country as billing_sub_country,
-            billing_country as billing_country,
-            payment_type_name as payment_type_name,
-            promo_unit_price as promo_unit_price,
+            SUBSTRING(
+                REGEXP_REPLACE(cp_phone, '\+1|\-|\.|\,|\(|\)|\#|\s|\+|^1'),
+                1,
+                20
+            ) AS phone,
+            billing_first_name,
+            billing_last_name,
+            billing_street_1,
+            billing_city,
+            billing_sub_country,
+            billing_country,
+            payment_type_name,
+            promo_unit_price,
+            shipping_zip_postal_code,
+            shipping_street_1,
+            shipping_last_name,
+            shipping_country,
+            shipping_city,
+            billing_zip_postal_code,
+            billing_street_2,
+            shipping_sub_country,
+            shipping_first_name,
+            shipping_street_2,
+            sale_unit_price,
+            rule_display_name,
+            parent_item_uid,
             discount_amount as discount_amount,
             cast(null as varchar) as amplitude_id,
             cast(null as varchar) as device_id,
@@ -214,7 +247,6 @@ from(
             cast(null as varchar) as td_referrer,
             cast(null as varchar) as td_path,
             cast(null as varchar) as td_host,
-            cast(null as varchar) as td_ip,
             cast(null as varchar) as td_color,
             cast(null as varchar) as td_language,
             cast(null as varchar) as td_platform,
@@ -232,7 +264,7 @@ from(
             cast(null as varchar) as unite_fan,
             cast(null as varchar) as animation_fan,
             cast(null as varchar) as op_pe_fan,
-            cast(null as varchar) as tcg_fa
+            cast(null as varchar) as tcg_fan
         from src_elastic_path_data.cart
         where time > $ { td.last_results.last_session_time }
             and to_base64url(
@@ -253,23 +285,21 @@ from(
                     )
                 )
             ) is not null
-        group by customer_uid,
-            shopping_cart_uid,
-            sku_code
         union ALL
-        select min(time) as time,
-            min(time) as min_insert_timestamp,
-            min(td_time_parse(event_time)) as min_update_timestamp,
-            max(
-                to_base64url(
-                    xxhash64(
-                        cast(
-                            coalesce(cast(amplitude_id as varchar), '') || coalesce(cast(session_id as varchar), '') || coalesce(cast(uuid as varchar), '') as varbinary
-                        )
+        select time as time,
+            TD_TIME_PARSE(event_time) as event_time,
+            NULL as cart_item_last_modified_date_unixtime,
+            NULL AS shopping_cart_last_modified_date_unixtime,
+            TD_TIME_PARSE(client_event_time) AS client_event_time,
+            TD_TIME_PARSE(client_upload_time) AS client_upload_time,
+            to_base64url(
+                xxhash64(
+                    cast(
+                        coalesce(cast(amplitude_id as varchar), '') || coalesce(cast(session_id as varchar), '') || coalesce(cast(uuid as varchar), '') as varbinary
                     )
                 )
             ) as id,
-            'amplitud' as source,
+            'AMPLITUDE' as source,
             cast(null as varchar) as cp_email,
             cast(null as varchar) as storecode,
             cast(null as varchar) as cart_status,
@@ -297,21 +327,28 @@ from(
             cast(null as varchar) as promo_unit_price,
             cast(null as varchar) as discount_amount,
             cast(amplitude_id as varchar) as amplitude_id,
+            user_id as user_id,
             device_id as device_id,
             event_time as event_time,
             server_upload_time as server_upload_time,
             client_event_time as client_event_time,
             cast(event_id as varchar) as event_id,
             cast(session_id as varchar) as session_id,
-            event_type as event_type,
-            library as library,
-            platform as platform,
-            os_name as os_name,
-            os_version as os_version,
-            device_type as device_type,
-            country as country,
-            city as city,
-            uuid as uuid cast(null as varchar) as td_referrer,
+            event_type,
+            library,
+            platform,
+            os_name,
+            os_version,
+            device_type,
+            device_family,
+            country,
+            city,
+            uuid,
+            cast(null as varchar) as td_referrer,
+            processed_time,
+            language,
+            region,
+            ip_address,
             cast(null as varchar) as td_path,
             cast(null as varchar) as td_host,
             cast(null as varchar) as td_ip,
@@ -357,8 +394,13 @@ from(
         select time as time,
             time as min_insert_timestamp,
             td_time_parse(time) as min_update_timestamp,
-            to_base64url(xxhash64(cast(coalesce(cast(td_client_id as varchar), '') || coalesce(cast(td_global_id as varchar), '')  as varbinary
-                        ))) as id,
+            to_base64url(
+                xxhash64(
+                    cast(
+                        coalesce(cast(td_client_id as varchar), '') || coalesce(cast(td_global_id as varchar), '') as varbinary
+                    )
+                )
+            ) as id,
             'pcom' as source,
             cast(null as varchar) as cp_email,
             cast(null as varchar) as storecode,
@@ -472,7 +514,7 @@ from(
                 OR td_url like '%sammelkartenspiel%' THEN 'true'
                 else 'false'
             end AS tcg_fan
-            from src_amplitude_pokemoncenter.amplitude_pokemoncenter_prod
+        from src_amplitude_pokemoncenter.amplitude_pokemoncenter_prod
         where time > $ { td.last_results.last_session_time }
             and to_base64url(
                 xxhash64(
@@ -492,4 +534,4 @@ from(
                     )
                 )
             ) is not null
-    
+    )
