@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS rr_tpci_stg.oder_events (
     time BIGINT,
+    order_timestamp_utc BIGINT,
     id VARCHAR,
     customer_key VARCHAR,
     order_id VARCHAR,
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS rr_tpci_stg.oder_events (
 );
 insert into rr_tpci_stg.oder_events
 SELECT time AS time,
+    order_timestamp_utc AS order_timestamp_utc,
     id,
     CAST(customer_key AS VARCHAR) AS customer_key,
     NULLIF(TRIM(order_id), '') AS order_id,
@@ -28,7 +30,8 @@ SELECT time AS time,
         ''
     ) AS ordered_product_quantity
 FROM (
-        SELECT TD_TIME_PARSE(order_timestamp_utc) AS time,
+        SELECT time AS time,
+        TD_TIME_PARSE(order_timestamp_utc) AS order_timestamp_utc,
             to_base64url(
                 xxhash64(
                     cast(
@@ -42,9 +45,12 @@ FROM (
             product_key AS product_key,
             order_status AS order_status,
             CASE
-                WHEN storefront = 'www.pokemoncenter.com' OR storefront = 'pokemoncenter.com' THEN 'US'
-                WHEN storefront = 'www.pokemoncenter.com/en-gb' OR storefront = 'pokemoncenter.com/en-gb' THEN 'UK'
-                WHEN storefront = 'www.pokemoncenter.com/en-ca' OR storefront = 'www.pokemoncenter.ca' THEN 'CA'
+                WHEN storefront = 'www.pokemoncenter.com'
+                OR storefront = 'pokemoncenter.com' THEN 'US'
+                WHEN storefront = 'www.pokemoncenter.com/en-gb'
+                OR storefront = 'pokemoncenter.com/en-gb' THEN 'UK'
+                WHEN storefront = 'www.pokemoncenter.com/en-ca'
+                OR storefront = 'www.pokemoncenter.ca' THEN 'CA'
                 ELSE storefront
             END AS storefront,
             demand_quantity AS demand_quantity,
